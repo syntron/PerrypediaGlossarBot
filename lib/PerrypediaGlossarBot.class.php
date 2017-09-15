@@ -707,6 +707,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
         }
         $str .= "|}\n";
+        $str .= sprintf("''Anzahl der Einträge: '''%d''' ''\n", $count);
 
         return $str;
     }
