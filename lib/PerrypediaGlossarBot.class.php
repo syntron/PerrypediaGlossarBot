@@ -16,6 +16,7 @@ define("PGB_BASEDIR", dirname(__FILE__));
 class PerrypediaGlossarBot{
 
     private $config = NULL; /* configuration; loaded from config.php */
+    private $rename = NULL; /* rename table */
     private $l = NULL;      /* log handle */
     private $args = NULL;   /* command line arguments */
 
@@ -38,7 +39,7 @@ class PerrypediaGlossarBot{
     /* constructor
        $config      - configuration (perrypedia account/password)
      */
-    function __construct($config) {
+    function __construct($config, $rename = array()) {
 
         // first try system PEAR
         @require_once('System.php');
@@ -49,6 +50,9 @@ class PerrypediaGlossarBot{
 
         /* save config */
         $this->config = $config;
+
+        /* save rename table */
+        $this->rename = $rename;
 
         /* analyse command line */
         $this->args = $this->commandline();
@@ -315,9 +319,7 @@ class PerrypediaGlossarBot{
 
                     $valid = TRUE;
 
-                    $visible = preg_replace("!\[\[([^\]]+\||)(.*?)\]\]!", "$2",
-                        $entry[1]);
-                    $visible = trim($visible);
+                    $visible = $this->perrypediaVisible($entry[1]);
                     $entries[] = array(
                         'pr' => $pr,
                         'orig' => $entry[1],
@@ -335,7 +337,23 @@ class PerrypediaGlossarBot{
         $this->l->info(sprintf("max pr: %d", $pr_max));
         $this->l->info(sprintf("glossar entries: %d", count($entries)));
 
-        /* TODO: renames if needed */
+        /* rename entries if listed in rename table */
+        $rename_keys = array_keys($this->rename);
+        $entries_keys = array_keys($entries);
+        for ($ii = 0; $ii < count($entries_keys); $ii++) {
+            $key = $entries[$entries_keys[$ii]]['visible'];
+            if (in_array($key, $rename_keys)) {
+                /* update data */
+                $this->l->notice(sprintf("update entry '%s' [PR%d]: %s",
+                    $entries[$entries_keys[$ii]]['orig'],
+                    $entries[$entries_keys[$ii]]['pr'],
+                    $this->rename[$key]));
+
+                $entries[$entries_keys[$ii]]['orig'] = $this->rename[$key];
+                $entries[$entries_keys[$ii]]['visible'] =
+                    $this->perrypediaVisible($this->rename[$key]);
+           }
+        }
 
         /* sort glossar entries */
         $glossar = array();
@@ -727,6 +745,15 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         return $str;
     }
 
+    private function perrypediaVisible($str)
+    {
+        $pattern = "!\[\[([^\]]+\||)(.*?)\]\]!";
+
+        $str = preg_replace($pattern, "$2", $str);
+        $str = trim($str);
+
+        return $str;
+    }
 }
 
 ?>
