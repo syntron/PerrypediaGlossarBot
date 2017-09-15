@@ -179,8 +179,8 @@ class PerrypediaGlossarBot{
                 $this->run00prepare();
                 $this->run01fetch();
                 $this->run02create();
-                $this->run04diff();
-                $this->run07submit();
+                $this->run03diff();
+                $this->run04submit();
                 break;
             case 'prepare':
                 $this->run00prepare();
