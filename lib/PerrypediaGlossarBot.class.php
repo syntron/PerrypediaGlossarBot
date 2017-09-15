@@ -139,11 +139,11 @@ class PerrypediaGlossarBot{
             require_once(PGB_BASEDIR .'/dependencies/PEAR/Log.php');
         }
 
-        /* define priority - default: WARNING / DEBUG (if --debug) */
+        /* define priority - default: INFO / DEBUG (if --debug) */
         if ($this->args->options['debug']) {
             $level = PEAR_LOG_DEBUG;
         } else {
-            $level = PEAR_LOG_WARNING;
+            $level = PEAR_LOG_INFO;
         }
 
         /* create main log handle */
