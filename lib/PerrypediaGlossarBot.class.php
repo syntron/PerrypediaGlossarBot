@@ -19,10 +19,36 @@ class PerrypediaGlossarBot{
     private $l = NULL;      /* log handle */
     private $args = NULL;   /* command line arguments */
 
+    private $urls = array(  /* URLs used to connect to perrypedia */
+        'api:query' => "https://www.perrypedia.proc.org/mediawiki/api.php?action=query&titles=%s&prop=revisions&rvprop=content&format=json",
+    );
+
+    private $GlossarAlphPages= array(
+        'A','B','C','D','E','F','G','H','I-J','K','L','M','N','O','P-Q','R',
+        'S','T','U-W','X-Z'
+    );
+
+    private $dirs = array(
+        "01fetch"   => "./steps/01fetch",
+        "02extract" => "./steps/02extract",
+        "03check"   => "./steps/03check",
+        "04sort"    => "./steps/04sort",
+        "05create"  => "./steps/05create",
+        "06diff"    => "./steps/06diff",
+        "07submit"  => "./steps/07submit",
+    );
+
     /* constructor
        $config      - configuration (perrypedia account/password)
      */
     function __construct($config) {
+
+        // first try system PEAR
+        @require_once('System.php');
+        // if not successfull use the local version
+        if (!class_exists("System")) {
+            require_once(PGB_BASEDIR .'/dependencies/PEAR/System.php');
+        }
 
         /* save config */
         $this->config = $config;
@@ -223,6 +249,52 @@ class PerrypediaGlossarBot{
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* create directory */
+        $directory = $this->dirs['01fetch'];
+        if (!@System::mkdir('-p '. $directory)) {
+            $this->l->error(sprintf("Can not create directory: %s", $directory));
+            exit(1);
+        }
+
+        /* prepare list of perrypedia pages for alphabetical list */
+        /* build list of perrypedia pages to fetch */
+        $titles = "";
+        for ($ii = 0; $ii < count($this->GlossarAlphPages); $ii++) {
+            $titles .= "Perry_Rhodan-Glossar_". $this->GlossarAlphPages[$ii];
+            if ($ii < count($this->GlossarAlphPages) - 1) {
+                $titles .= "|";
+            }
+        }
+
+        /* fetch current versions of the alphabetical list */
+        $json = $this->fetchPPjson($titles);
+        foreach ($json['query']['pages'] as $p) {
+            $this->savePerrypediaJSON($directory, $p);
+        }
+
+        /* fetch PR-Glossar page*/
+        $json = $this->fetchPPjson('Vorlage:PR-Glossar');
+        $pageID = array_keys($json['query']['pages']);
+        $p = $json['query']['pages'][$pageID[0]];
+        $this->savePerrypediaJSON($directory, $p);
+
+        /* extract all overview pages */
+        $content = $p['revisions'][0]['*'];
+        preg_match_all("!(Perry Rhodan-Glossar (\d{4}) - (\d{4}))!m", $content, $m);
+        $titles = "";
+        for ($ii = 0; $ii < count($m[0]); $ii++) {
+            $titles .= $m[0][$ii];
+            if ($ii < count($m[0]) - 1) {
+                $titles .= "|";
+            }
+        }
+
+        $json = $this->fetchPPjson($titles);
+        foreach ($json['query']['pages'] as $p) {
+            $this->savePerrypediaJSON($directory, $p);
+        }
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
@@ -231,6 +303,24 @@ class PerrypediaGlossarBot{
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* create directory */
+        $directory = $this->dirs['02extract'];
+        if (!@System::mkdir('-p '. $directory)) {
+            $this->l->error(sprintf("Can not create directory: %s", $directory));
+            exit(1);
+        }
+
+        /* get all data */
+        $files = System::find($this->dirs['01fetch'] .' -name Perry_Rhodan-Glossar_*_-_*.perrypedia.json');
+        foreach ($files as $f) {
+            $content = file_get_contents($f);
+//            preg_match_all("!\{\|.*?Quelle:PR(\d{4})(.*?)(-\||\|\})!m", $content, $m);
+            preg_match_all("!Quelle:PR(\d{4}).*?(|-)(.*?)(|-)!m", $content, $m);
+            print_r($m);
+            exit();
+        }
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
@@ -273,6 +363,54 @@ class PerrypediaGlossarBot{
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
+    }
+
+    /*
+     see: https://www.mediawiki.org/wiki/API
+     */
+    private function fetchPPjson($titles)
+    {
+
+        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* no spaces in titles - replace them by underscore */
+        $titles = strtr($titles, " ", "_");
+
+        /* define URL */
+        $url = sprintf($this->urls['api:query'], $titles);
+        $this->l->info(sprintf("Fetch URL '%s'", $url));
+
+        /* fetch data using curl */
+        $ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+		$res = curl_exec($ch);
+		curl_close($ch);
+
+		/* parse return data */
+		if ($res !== FALSE) {
+            $json = json_decode($res, true);
+            $this->l->debug(sprintf("Fetch URL '%s' - success", $url));
+        } else {
+            $this->l->error(sprintf("Error fetching URL '%s': [%d] %s",
+                                    $url, curl_errno($ch), curl_error($ch)));
+            $json = FALSE;
+        }
+
+		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+		return $json;
+    }
+
+    private function savePerrypediaJSON($directory, $pagedata)
+    {
+        $filename = $pagedata['title'];
+        $filename = strtr($filename, " ", "_");
+
+        $file = $directory .'/'. $filename .'.perrypedia.json';
+        $fh = fopen($file, "w+");
+        fwrite($fh, serialize($pagedata));
+        fclose($fh);
     }
 
 }
