@@ -401,7 +401,6 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
 ", $pr_max);
         $str_post = "
-
 [[Kategorie:Beilage]]
 
 {{PPDefaultsort}}
