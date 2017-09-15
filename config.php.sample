@@ -1,0 +1,8 @@
+<?php
+
+/* configuration for PerrypediaGlossarBot */
+$config = array();
+
+/* Perrypedia account and password */
+$config['account'] = "my Bot";
+$config['password'] = "my BotPassword";
