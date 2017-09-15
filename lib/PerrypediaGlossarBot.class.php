@@ -234,11 +234,12 @@ class PerrypediaGlossarBot{
         /* build list of perrypedia pages to fetch */
         $titles = "";
         for ($ii = 0; $ii < count($this->GlossarAlphPages); $ii++) {
-            $titles .= "Perry_Rhodan-Glossar_". $this->GlossarAlphPages[$ii];
+            $titles .= "Perry Rhodan-Glossar ". $this->GlossarAlphPages[$ii];
             if ($ii < count($this->GlossarAlphPages) - 1) {
                 $titles .= "|";
             }
         }
+        $titles = strtr($titles, " ", "_");
 
         /* fetch current versions of the alphabetical list */
         $json = $this->fetchPPjson($titles);
@@ -251,7 +252,7 @@ class PerrypediaGlossarBot{
             $pagename = strtr($pagename, " ", "_");
             $filename = $directory .'/'. $pagename .'.perrypedia.txt';
             $content = $p['revisions'][0]['*'];
-            $this->writePerrypedia($filename, $content);
+            $this->writeFile($filename, $content);
         }
 
         /* fetch PR-Glossar page*/
@@ -303,9 +304,17 @@ class PerrypediaGlossarBot{
             preg_match_all("!\[\[Quelle:PR(\d{4}).*?\|-(.*?)(\|-|\|\})!ms",
                 $content, $m1, PREG_SET_ORDER);
             foreach ($m1 as $one) {
+                $valid = FALSE;
                 $pr = $one[1];
                 preg_match_all("!^\* (.*?)$!ms", $one[2], $m2, PREG_SET_ORDER);
                 foreach ($m2 as $entry) {
+                    /* skip empty entries*/
+                    if (strlen($entry[1]) == 0) {
+                        continue;
+                    }
+
+                    $valid = TRUE;
+
                     $entries[] = array(
                         'pr' => $pr,
                         'orig' => $entry[1],
@@ -315,12 +324,14 @@ class PerrypediaGlossarBot{
                             "$2", $entry[1]),
                     );
                 }
-                /* consider only pr with glossar for lates pr */
-                if (count($m2) > 0) {
+                /* consider only pr with glossar entries for latest pr */
+                if ($valid) {
                     $pr_max = max($pr, $pr_max);
                 }
             }
         }
+        $this->l->info(sprintf("max pr: %d", $pr_max));
+        $this->l->info(sprintf("glossar entries: %d", count($entries)));
 
         /* TODO: renames if needed */
 
@@ -362,11 +373,18 @@ class PerrypediaGlossarBot{
         }
 
         /* sort array of glossar entries */
+        ksort($glossar);
+        $glossar_total = 0;
         foreach ($glossar as $k => $v) {
             ksort($v);
             $glossar[$k] = $v;
+
+            $this->l->info(sprintf("sorted glossar entries '%s': %d",
+                $k, count($v)));
+            $glossar_total += count($v);
         }
-        ksort($glossar);
+        $this->l->info(sprintf("total sorted glossar entries: %d",
+            $glossar_total));
 
         /* build basic tables for each letter */
         $perrypedia = array();
@@ -375,6 +393,17 @@ class PerrypediaGlossarBot{
         }
 
         /* build pages */
+        $str_pre = sprintf("{{Navigationsleiste Glossar alphabetisch}}
+
+Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
+
+", $pr_max);
+        $str_post = "
+
+[[Kategorie:Beilage]]
+
+{{PPDefaultsort}}
+";
         $pages = array();
         foreach ($this->GlossarAlphPages as $p) {
             switch ($p) {
@@ -405,20 +434,7 @@ class PerrypediaGlossarBot{
                     break;
             }
 
-            $str_pre = sprintf("{{Navigationsleiste Glossar alphabetisch}}
-
-Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
-
-", $pr_max);
-
-            $str_post = "
-
-[[Kategorie:Beilage]]
-
-{{PPDefaultsort}}
-";
-
-            $page_key = "Perry_Rhodan-Glossar_". $p;
+            $page_key = "Perry Rhodan-Glossar ". $p;
             $pages[$page_key] = $str_pre . $str . $str_post;
         }
  
@@ -431,7 +447,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $pagename = strtr($pagename, " ", "_");
             $filename = $directory .'/'. $pagename .'.perrypedia.txt';
             $content = $v;
-            $this->writePerrypedia($filename, $content);
+            $this->writeFile($filename, $content);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
@@ -443,10 +459,79 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
-        /* save new pages */
-        foreach ($pages as $k => $v) {
-            $filename = $k;
-            
+        require_once(PGB_BASEDIR .'/dependencies/diff/class.Diff.php');
+
+
+        /* create directory */
+        $directory = $this->dirs['03diff'];
+        if (!@System::mkdir('-p '. $directory)) {
+            $this->l->error(sprintf("Can not create directory: %s", $directory));
+            exit(1);
+        }
+
+        /* definitoins from http://code.stephenmorley.org/php/diff-implementation/ */
+        $diff_pre = "<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      Diff for '%1\$s'
+    </title>
+    <style type=\"text/css\">
+
+      .diff td{
+        padding:0 0.667em;
+        vertical-align:top;
+        white-space:pre;
+        white-space:pre-wrap;
+        font-family:Consolas,'Courier New',Courier,monospace;
+        font-size:0.75em;
+        line-height:1.333;
+      }
+
+      .diff span{
+        display:block;
+        min-height:1.333em;
+        margin-top:-1px;
+        padding:0 3px;
+      }
+
+      * html .diff span{
+        height:1.333em;
+      }
+
+      .diff span:first-child{
+        margin-top:0;
+      }
+
+      .diffDeleted span{
+        border:1px solid rgb(255,192,192);
+        background:rgb(255,224,224);
+      }
+
+      .diffInserted span{
+        border:1px solid rgb(192,255,192);
+        background:rgb(224,255,224);
+      }
+
+    </style>
+  </head>
+  <body>
+    <h1>%1\$s</h1>
+
+";
+        $diff_post = "";
+        foreach ($this->GlossarAlphPages as $p) {
+            $pagename = "Perry Rhodan-Glossar ". $p;
+            $pagename = strtr($pagename, " ", "_");
+
+            $filename_old = $this->dirs['01fetch'] .'/'. $pagename .'.perrypedia.txt';
+            $filename_new = $this->dirs['02create'] .'/'. $pagename .'.perrypedia.txt';
+
+            $diff = Diff::toTable(Diff::compareFiles($filename_old, $filename_new));
+            $content = sprintf($diff_pre, $pagename) . $diff . $diff_post;
+
+            $diffname = $directory .'/'. $pagename .'.diff.html';
+            $this->writeFile($diffname, $content);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
@@ -500,55 +585,32 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
     private function savePerrypediaJSON($directory, $pagedata)
     {
-
-		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-
 		$filename = $pagedata['title'];
         $filename = strtr($filename, " ", "_");
 
         $file = $directory .'/'. $filename .'.perrypedia.json';
 
-		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
         return $this->writePHP2file($file, $pagedata);
     }
 
-    private function writePerrypedia($file, $str)
+    private function writeFile($file, $str)
     {
-
-		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-
 		$fh = fopen($file, "w+");
         fwrite($fh, $str);
         fclose($fh);
-
-		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
     }
 
     private function writePHP2file($file, $data)
     {
-
-		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-
 		$fh = fopen($file, "w+");
         fwrite($fh, serialize($data));
         fclose($fh);
-
-		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
     }
 
     private function readfile2PHP($file)
     {
-
-		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-
         $content = file_get_contents($file);
         return unserialize($content);
-
-		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
     }
 
     /*
