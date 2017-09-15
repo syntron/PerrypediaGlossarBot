@@ -30,12 +30,9 @@ class PerrypediaGlossarBot{
 
     private $dirs = array(
         "01fetch"   => "./steps/01fetch",
-        "02extract" => "./steps/02extract",
-        "03check"   => "./steps/03check",
-        "04sort"    => "./steps/04sort",
-        "05create"  => "./steps/05create",
-        "06diff"    => "./steps/06diff",
-        "07submit"  => "./steps/07submit",
+        "02create"  => "./steps/02create",
+        "03diff"    => "./steps/03diff",
+        "04submit"  => "./steps/04submit",
     );
 
     /* constructor
@@ -100,7 +97,7 @@ class PerrypediaGlossarBot{
             'action'      => 'StoreString'
         ));
         $step_all_cmd = $parser->addCommand('all', array(
-            'description' => 'Alle Schritte nacheinander ausführen [0-7]'
+            'description' => 'Alle Schritte nacheinander ausführen [0-4]'
         ));
         $step00_cmd = $parser->addCommand('prepare', array(
             'description' => 'Verzeichnis erstellen und alte Dateien löschen',
@@ -110,29 +107,17 @@ class PerrypediaGlossarBot{
             'description' => 'Glossar-Seiten von der Perrypedia laden',
             'aliases'     => array('1'),
         ));
-        $step02_cmd = $parser->addCommand('extract', array(
-            'description' => 'Glossar-Einträge herausfiltern',
+        $step02_cmd = $parser->addCommand('create', array(
+            'description' => 'Alphabetisch sortierte Glossar-Seiten erstellen',
             'aliases'     => array('2'),
         ));
-        $step03_cmd = $parser->addCommand('check', array(
-            'description' => 'Glossar-Einträge überprüfen und wenn nötig umbenennen',
+        $step03_cmd = $parser->addCommand('diff', array(
+            'description' => 'Unterschiede zu den bestehenden Seiten aufzeigen',
             'aliases'     => array('3'),
         ));
-        $step04_cmd = $parser->addCommand('sort', array(
-            'description' => 'Glossar-Einträge sortieren',
-            'aliases'     => array('4'),
-        ));
-        $step05_cmd = $parser->addCommand('create', array(
-            'description' => 'Alphabetisch sortierte Glossar-Seiten erstellen',
-            'aliases'     => array('5'),
-        ));
-        $step06_cmd = $parser->addCommand('diff', array(
-            'description' => 'Unterschiede zu den bestehenden Seiten aufzeigen',
-            'aliases'     => array('6'),
-        ));
-        $step07_cmd = $parser->addCommand('submit', array(
+        $step04_cmd = $parser->addCommand('submit', array(
             'description' => 'Neue Glossar-Seiten hochladen',
-            'aliases'     => array('7'),
+            'aliases'     => array('4'),
         ));
 
         try {
@@ -193,11 +178,8 @@ class PerrypediaGlossarBot{
             case 'all':
                 $this->run00prepare();
                 $this->run01fetch();
-                $this->run02extract();
-                $this->run03check();
-                $this->run04sort();
-                $this->run05create();
-                $this->run06diff();
+                $this->run02create();
+                $this->run04diff();
                 $this->run07submit();
                 break;
             case 'prepare':
@@ -206,23 +188,14 @@ class PerrypediaGlossarBot{
             case 'fetch':
                 $this->run01fetch();
                 break;
-            case 'extract':
-                $this->run02extract();
-                break;
-            case 'check':
-                $this->run03check();
-                break;
-            case 'sort':
-                $this->run04sort();
-                break;
             case 'create':
-                $this->run05create();
+                $this->run02create();
                 break;
             case 'diff':
-                $this->run06diff();
+                $this->run03diff();
                 break;
             case 'submit':
-                $this->run07submit();
+//                 $this->run04submit();
                 break;
             default:
                 $this->l->warning("No command defined (try help using '--help')");
@@ -270,7 +243,15 @@ class PerrypediaGlossarBot{
         /* fetch current versions of the alphabetical list */
         $json = $this->fetchPPjson($titles);
         foreach ($json['query']['pages'] as $p) {
+            /* save json data */
             $this->savePerrypediaJSON($directory, $p);
+
+            /* save page for comparison */
+            $pagename = $p['title'];
+            $pagename = strtr($pagename, " ", "_");
+            $filename = $directory .'/'. $pagename .'.perrypedia.txt';
+            $content = $p['revisions'][0]['*'];
+            $this->writePerrypedia($filename, $content);
         }
 
         /* fetch PR-Glossar page*/
@@ -299,65 +280,180 @@ class PerrypediaGlossarBot{
 
     }
 
-    private function run02extract()
+    private function run02create()
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
         /* create directory */
-        $directory = $this->dirs['02extract'];
+        $directory = $this->dirs['02create'];
         if (!@System::mkdir('-p '. $directory)) {
             $this->l->error(sprintf("Can not create directory: %s", $directory));
             exit(1);
         }
 
+        /* save latest pr entry */
+        $pr_max = 0;
+
         /* get all data */
+        $entries = array();
         $files = System::find($this->dirs['01fetch'] .' -name Perry_Rhodan-Glossar_*_-_*.perrypedia.json');
         foreach ($files as $f) {
             $content = file_get_contents($f);
-//            preg_match_all("!\{\|.*?Quelle:PR(\d{4})(.*?)(-\||\|\})!m", $content, $m);
-            preg_match_all("!Quelle:PR(\d{4}).*?(|-)(.*?)(|-)!m", $content, $m);
-            print_r($m);
-            exit();
+            preg_match_all("!\[\[Quelle:PR(\d{4}).*?\|-(.*?)(\|-|\|\})!ms",
+                $content, $m1, PREG_SET_ORDER);
+            foreach ($m1 as $one) {
+                $pr = $one[1];
+                preg_match_all("!^\* (.*?)$!ms", $one[2], $m2, PREG_SET_ORDER);
+                foreach ($m2 as $entry) {
+                    $entries[] = array(
+                        'pr' => $pr,
+                        'orig' => $entry[1],
+                        /* the command below creates the entry as it will be
+                           visible in the HTML page */
+                        'visible' => preg_replace("!\[\[([^\]]+\||)(.*?)\]\]!",
+                            "$2", $entry[1]),
+                    );
+                }
+                /* consider only pr with glossar for lates pr */
+                if (count($m2) > 0) {
+                    $pr_max = max($pr, $pr_max);
+                }
+            }
+        }
+
+        /* TODO: renames if needed */
+
+        /* sort glossar entries */
+        $glossar = array();
+        foreach ($entries as $e) {
+            /* define sort key */
+            $key = $e['visible'];
+            /* - translate characters */
+            $key = $this->transliterateString($key);
+            /* - all lower case characters */
+            $key = strtolower($key);
+            /* - first character upper case */
+            $key = ucfirst($key);
+
+            /* skip empty entries*/
+            if (strlen($key) == 0) {
+              continue;
+            }
+
+            /* get first character */
+            $char = $key[0];
+            $char = ctype_alpha($char) ? $char : '0-9';
+
+            if (!isset($glossar[$char])) {
+              $glossar[$char] = array();
+            }
+
+            /* add entry to array */
+            if (!isset($glossar[$char][$key])) {
+                /* add additional fields */
+                $e['count'] = 1;
+                $e['pr'] = (array)$e['pr'];
+                $glossar[$char][$key] = $e;
+            } else {
+                $glossar[$char][$key]['count']++;
+                $glossar[$char][$key]['pr'][] = $e['pr'];
+            }
+        }
+
+        /* sort array of glossar entries */
+        foreach ($glossar as $k => $v) {
+            ksort($v);
+            $glossar[$k] = $v;
+        }
+        ksort($glossar);
+
+        /* build basic tables for each letter */
+        $perrypedia = array();
+        foreach ($glossar as $key => $entries) {
+            $perrypedia[$key] = $this->createPerrypediaGlossarAlph($key, $entries);
+        }
+
+        /* build pages */
+        $pages = array();
+        foreach ($this->GlossarAlphPages as $p) {
+            switch ($p) {
+                case "A":
+                    $str = $perrypedia['0-9'] ."\n".
+                           $perrypedia['A'];
+                    break;
+                case "I-J":
+                    $str = $perrypedia['I'] ."\n".
+                           $perrypedia['J'];
+                    break;
+                case "P-Q":
+                    $str = $perrypedia['P'] ."\n".
+                           $perrypedia['Q'];
+                    break;
+                case "U-W":
+                    $str = $perrypedia['U'] ."\n".
+                           $perrypedia['V'] ."\n".
+                           $perrypedia['W'];
+                    break;
+                case "X-Z":
+                    $str = $perrypedia['X'] ."\n".
+                           $perrypedia['Y'] ."\n".
+                           $perrypedia['Z'];
+                    break;
+                default:
+                    $str = $perrypedia[$p];
+                    break;
+            }
+
+            $str_pre = sprintf("{{Navigationsleiste Glossar alphabetisch}}
+
+Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
+
+", $pr_max);
+
+            $str_post = "
+
+[[Kategorie:Beilage]]
+
+{{PPDefaultsort}}
+";
+
+            $page_key = "Perry_Rhodan-Glossar_". $p;
+            $pages[$page_key] = $str_pre . $str . $str_post;
+        }
+ 
+        /* save data to file */
+        $filename = $directory .'/glossar_new.phpvar';
+        $this->writePHP2file($filename, $pages);
+
+        foreach ($pages as $k => $v) {
+            $pagename = $k;
+            $pagename = strtr($pagename, " ", "_");
+            $filename = $directory .'/'. $pagename .'.perrypedia.txt';
+            $content = $v;
+            $this->writePerrypedia($filename, $content);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
 
-    private function run03check()
+    private function run03diff()
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* save new pages */
+        foreach ($pages as $k => $v) {
+            $filename = $k;
+            
+        }
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
 
-    private function run04sort()
-    {
-
-        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
-    }
-
-    private function run05create()
-    {
-
-        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
-    }
-
-    private function run06diff()
-    {
-
-        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
-        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
-
-    }
-
-    private function run07submit()
+    private function run04submit()
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
@@ -404,13 +500,165 @@ class PerrypediaGlossarBot{
 
     private function savePerrypediaJSON($directory, $pagedata)
     {
-        $filename = $pagedata['title'];
+
+		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+		$filename = $pagedata['title'];
         $filename = strtr($filename, " ", "_");
 
         $file = $directory .'/'. $filename .'.perrypedia.json';
-        $fh = fopen($file, "w+");
-        fwrite($fh, serialize($pagedata));
+
+		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+        return $this->writePHP2file($file, $pagedata);
+    }
+
+    private function writePerrypedia($file, $str)
+    {
+
+		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+		$fh = fopen($file, "w+");
+        fwrite($fh, $str);
         fclose($fh);
+
+		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+    }
+
+    private function writePHP2file($file, $data)
+    {
+
+		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+		$fh = fopen($file, "w+");
+        fwrite($fh, serialize($data));
+        fclose($fh);
+
+		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+    }
+
+    private function readfile2PHP($file)
+    {
+
+		$this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        $content = file_get_contents($file);
+        return unserialize($content);
+
+		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+    }
+
+    /*
+     https://stackoverflow.com/questions/6837148/change-foreign-characters-to-normal-equivalent
+     */
+    private function transliterateString($txt) {
+        $transliterationTable = array(
+            'á' => 'a', 'Á' => 'A', 'à' => 'a', 'À' => 'A', 'ă' => 'a',
+            'Ă' => 'A', 'â' => 'a', 'Â' => 'A', 'å' => 'a', 'Å' => 'A',
+            'ã' => 'a', 'Ã' => 'A', 'ą' => 'a', 'Ą' => 'A', 'ā' => 'a',
+            'Ā' => 'A', 'ä' => 'ae', 'Ä' => 'AE', 'æ' => 'ae', 'Æ' => 'AE',
+            'ḃ' => 'b', 'Ḃ' => 'B', 'ć' => 'c', 'Ć' => 'C', 'ĉ' => 'c',
+            'Ĉ' => 'C', 'č' => 'c', 'Č' => 'C', 'ċ' => 'c', 'Ċ' => 'C',
+            'ç' => 'c', 'Ç' => 'C', 'ď' => 'd', 'Ď' => 'D', 'ḋ' => 'd',
+            'Ḋ' => 'D', 'đ' => 'd', 'Đ' => 'D', 'ð' => 'dh', 'Ð' => 'Dh',
+            'é' => 'e', 'É' => 'E', 'è' => 'e', 'È' => 'E', 'ĕ' => 'e',
+            'Ĕ' => 'E', 'ê' => 'e', 'Ê' => 'E', 'ě' => 'e', 'Ě' => 'E',
+            'ë' => 'e', 'Ë' => 'E', 'ė' => 'e', 'Ė' => 'E', 'ę' => 'e',
+            'Ę' => 'E', 'ē' => 'e', 'Ē' => 'E', 'ḟ' => 'f', 'Ḟ' => 'F',
+            'ƒ' => 'f', 'Ƒ' => 'F', 'ğ' => 'g', 'Ğ' => 'G', 'ĝ' => 'g',
+            'Ĝ' => 'G', 'ġ' => 'g', 'Ġ' => 'G', 'ģ' => 'g', 'Ģ' => 'G',
+            'ĥ' => 'h', 'Ĥ' => 'H', 'ħ' => 'h', 'Ħ' => 'H', 'í' => 'i',
+            'Í' => 'I', 'ì' => 'i', 'Ì' => 'I', 'î' => 'i', 'Î' => 'I',
+            'ï' => 'i', 'Ï' => 'I', 'ĩ' => 'i', 'Ĩ' => 'I', 'į' => 'i',
+            'Į' => 'I', 'ī' => 'i', 'Ī' => 'I', 'ĵ' => 'j', 'Ĵ' => 'J',
+            'ķ' => 'k', 'Ķ' => 'K', 'ĺ' => 'l', 'Ĺ' => 'L', 'ľ' => 'l',
+            'Ľ' => 'L', 'ļ' => 'l', 'Ļ' => 'L', 'ł' => 'l', 'Ł' => 'L',
+            'ṁ' => 'm', 'Ṁ' => 'M', 'ń' => 'n', 'Ń' => 'N', 'ň' => 'n',
+            'Ň' => 'N', 'ñ' => 'n', 'Ñ' => 'N', 'ņ' => 'n', 'Ņ' => 'N',
+            'ó' => 'o', 'Ó' => 'O', 'ò' => 'o', 'Ò' => 'O', 'ô' => 'o',
+            'Ô' => 'O', 'ő' => 'o', 'Ő' => 'O', 'õ' => 'o', 'Õ' => 'O',
+            'ø' => 'oe', 'Ø' => 'OE', 'ō' => 'o', 'Ō' => 'O', 'ơ' => 'o',
+            'Ơ' => 'O', 'ö' => 'oe', 'Ö' => 'OE', 'ṗ' => 'p', 'Ṗ' => 'P',
+            'ŕ' => 'r', 'Ŕ' => 'R', 'ř' => 'r', 'Ř' => 'R', 'ŗ' => 'r',
+            'Ŗ' => 'R', 'ś' => 's', 'Ś' => 'S', 'ŝ' => 's', 'Ŝ' => 'S',
+            'š' => 's', 'Š' => 'S', 'ṡ' => 's', 'Ṡ' => 'S', 'ş' => 's',
+            'Ş' => 'S', 'ș' => 's', 'Ș' => 'S', 'ß' => 'SS', 'ť' => 't',
+            'Ť' => 'T', 'ṫ' => 't', 'Ṫ' => 'T', 'ţ' => 't', 'Ţ' => 'T',
+            'ț' => 't', 'Ț' => 'T', 'ŧ' => 't', 'Ŧ' => 'T', 'ú' => 'u',
+            'Ú' => 'U', 'ù' => 'u', 'Ù' => 'U', 'ŭ' => 'u', 'Ŭ' => 'U',
+            'û' => 'u', 'Û' => 'U', 'ů' => 'u', 'Ů' => 'U', 'ű' => 'u',
+            'Ű' => 'U', 'ũ' => 'u', 'Ũ' => 'U', 'ų' => 'u', 'Ų' => 'U',
+            'ū' => 'u', 'Ū' => 'U', 'ư' => 'u', 'Ư' => 'U', 'ü' => 'ue',
+            'Ü' => 'UE', 'ẃ' => 'w', 'Ẃ' => 'W', 'ẁ' => 'w', 'Ẁ' => 'W',
+            'ŵ' => 'w', 'Ŵ' => 'W', 'ẅ' => 'w', 'Ẅ' => 'W', 'ý' => 'y',
+            'Ý' => 'Y', 'ỳ' => 'y', 'Ỳ' => 'Y', 'ŷ' => 'y', 'Ŷ' => 'Y',
+            'ÿ' => 'y', 'Ÿ' => 'Y', 'ź' => 'z', 'Ź' => 'Z', 'ž' => 'z',
+            'Ž' => 'Z', 'ż' => 'z', 'Ż' => 'Z', 'þ' => 'th', 'Þ' => 'Th',
+            'µ' => 'u', 'а' => 'a', 'А' => 'a', 'б' => 'b', 'Б' => 'b',
+            'в' => 'v', 'В' => 'v', 'г' => 'g', 'Г' => 'g', 'д' => 'd',
+            'Д' => 'd', 'е' => 'e', 'Е' => 'E', 'ё' => 'e', 'Ё' => 'E',
+            'ж' => 'zh', 'Ж' => 'zh', 'з' => 'z', 'З' => 'z', 'и' => 'i',
+            'И' => 'i', 'й' => 'j', 'Й' => 'j', 'к' => 'k', 'К' => 'k',
+            'л' => 'l', 'Л' => 'l', 'м' => 'm', 'М' => 'm', 'н' => 'n',
+            'Н' => 'n', 'о' => 'o', 'О' => 'o', 'п' => 'p', 'П' => 'p',
+            'р' => 'r', 'Р' => 'r', 'с' => 's', 'С' => 's', 'т' => 't',
+            'Т' => 't', 'у' => 'u', 'У' => 'u', 'ф' => 'f', 'Ф' => 'f',
+            'х' => 'h', 'Х' => 'h', 'ц' => 'c', 'Ц' => 'c', 'ч' => 'ch',
+            'Ч' => 'ch', 'ш' => 'sh', 'Ш' => 'sh', 'щ' => 'sch', 'Щ' => 'sch',
+            'ъ' => '', 'Ъ' => '', 'ы' => 'y', 'Ы' => 'y', 'ь' => '',
+            'Ь' => '', 'э' => 'e', 'Э' => 'e', 'ю' => 'ju', 'Ю' => 'ju',
+            'я' => 'ja', 'Я' => 'ja',
+            '»' => '', '«' => '');
+
+        return str_replace(
+            array_keys($transliterationTable),
+            array_values($transliterationTable),
+            $txt);
+    }
+
+    private function createPerrypediaGlossarAlph($key, $entries)
+    {
+        /* get number of entries */
+        $keys = array_keys($entries);
+        $count = count($keys);
+        $column = ceil($count / 3);
+
+        /* build perrypedia page for each entry */
+        $str = sprintf("== %s ==\n", $key);
+        $str .= "{| valign=\"top\" border=\"0\" cellpadding=\"4\" cellspacing=\"2\" width=\"100%\"\n";
+        $str .= "| width=\"33%\" valign=\"top\" |\n";
+        for ($ii = 0; $ii < min($column, $count); $ii++) {
+            $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
+        }
+        $str .= "| width=\"33%\" valign=\"top\" |\n";
+        for ($ii = $column; $ii < min(2*$column, $count); $ii++) {
+            $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
+        }
+        $str .= "| width=\"33%\" valign=\"top\" |\n";
+        for ($ii = 2*$column; $ii < $count; $ii++) {
+            $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
+        }
+        $str .= "|}\n";
+
+        return $str;
+    }
+
+    private function createPerrypediaGlossarAlphEntry($entry)
+    {
+        /* build data for one entry */
+        $str = sprintf("* %s (", $entry['orig']);
+        for ($ii = 0; $ii < count($entry['pr']); $ii++) {
+            $str .= sprintf("[[Quelle:PR%1\$d|PR&nbsp;%1\$d]]", $entry['pr'][$ii]);
+            if ($ii < count($entry['pr']) - 1) {
+                $str .= ", ";
+            }
+        }
+        $str .= ")\n";
+
+        return $str;
     }
 
 }
