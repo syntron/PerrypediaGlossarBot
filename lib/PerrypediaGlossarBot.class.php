@@ -315,13 +315,15 @@ class PerrypediaGlossarBot{
 
                     $valid = TRUE;
 
+                    $visible = preg_replace("!\[\[([^\]]+\||)(.*?)\]\]!", "$2",
+                        $entry[1]);
+                    $visible = trim($visible);
                     $entries[] = array(
                         'pr' => $pr,
                         'orig' => $entry[1],
                         /* the command below creates the entry as it will be
                            visible in the HTML page */
-                        'visible' => preg_replace("!\[\[([^\]]+\||)(.*?)\]\]!",
-                            "$2", $entry[1]),
+                        'visible' => $visible,
                     );
                 }
                 /* consider only pr with glossar entries for latest pr */
