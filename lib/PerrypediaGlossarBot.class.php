@@ -301,7 +301,7 @@ class PerrypediaGlossarBot{
         $files = System::find($this->dirs['01fetch'] .' -name Perry_Rhodan-Glossar_*_-_*.perrypedia.json');
         foreach ($files as $f) {
             $content = file_get_contents($f);
-            preg_match_all("!\[\[Quelle:PR(\d{4}).*?\|-(.*?)(\|-|\|\})!ms",
+            preg_match_all("!colspan=\"3\" \| \[\[Quelle:PR(\d{4}).*?\|-(.*?)(\|-|\|\})!ms",
                 $content, $m1, PREG_SET_ORDER);
             foreach ($m1 as $one) {
                 $valid = FALSE;
