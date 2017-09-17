@@ -3,8 +3,9 @@ Einführung
 Wie funktioniert es?
 - Seiteninhalt aus der Perrypedia laden
 - Glossar-Einträge von den chronologischen Listen einlesen
-- Glossar-Einträge sortieren und bearbeiten (Namen)
+- Glossar-Einträge sortieren und bearbeiten (Namen) - komplex; siehe Code
 - Alphabetische Seiten erstellen
+- (optional) Unterschiede alt <=> neu in Datei speichern (Überprüfung)
 - Neue Seiten hochladen
 
 - PerrypediaGlossarBot:run() verwendet Exceptions; abgefangen nur in dieser
