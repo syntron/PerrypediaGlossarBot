@@ -337,7 +337,7 @@ class PerrypediaGlossarBot{
                     $visible = $this->perrypediaVisible($entry[1]);
                     $entries[] = array(
                         'pr' => $pr,
-                        'orig' => $entry[1],
+                        'orig' => trim($entry[1]),
                         /* the command below creates the entry as it will be
                            visible in the HTML page */
                         'visible' => $visible,
