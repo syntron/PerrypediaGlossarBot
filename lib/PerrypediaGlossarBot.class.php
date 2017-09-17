@@ -608,6 +608,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
     /*
      sources:
      - https://www.mediawiki.org/wiki/API
+     - https://serverfault.com/questions/520797/how-to-add-content-to-all-pages-in-a-mediawiki
      - https://www.mediawiki.org/wiki/User:Bcoughlan/Login_with_curl
      */
     private function request4PP($url, $pPOST = array(), $pGET = array())
@@ -643,9 +644,24 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         }
 
         /* fetch data using curl */
-        $ch = curl_init($url);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_USERAGENT, $this->config['useragent']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_URL, ($url));
+        curl_setopt($ch, CURLOPT_ENCODING, "UTF-8" );
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookiefile']);
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookiefile']);
+        //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $strPOST);
+        /* if activated, debug information are appended to 'curl.debug' */
+        if (FALSE) {
+          curl_setopt($ch, CURLOPT_VERBOSE, true); // verbose output
+          $fp = fopen("curl.debug", "a+");
+          curl_setopt($ch, CURLOPT_STDERR, $fp); // write it to file
+          $fclose($fh);
+        }
+        /* execute request */
         $res = curl_exec($ch);
         curl_close($ch);
 

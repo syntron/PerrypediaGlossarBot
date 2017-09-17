@@ -1,3 +1,5 @@
+*.cookie
+*.debug
 *.diff
 *.diff.html
 *.log
