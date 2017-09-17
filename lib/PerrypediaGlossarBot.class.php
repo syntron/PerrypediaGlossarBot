@@ -641,10 +641,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $pGET['format'] = 'json';
 
         /* define URL (api URL + GET parameters) */
-        $this->l->debug(sprintf("URL:  '%s'", $url));
-        $url = $this->config['apiurl'] .'?';
+        $this->l->debug(sprintf("URL:  '%s'", $this->config['apiurl']));
+        $strGET = '?';
         foreach ($pGET as $k => $v) {
-          $url = $url . sprintf("%s=%s&", urlencode($k), urlencode($v));
+          $strGET = $strGET . sprintf("%s=%s&", urlencode($k), urlencode($v));
           $this->l->debug(sprintf("GET:  '%s' => '%s'", $k, $v));
         }
         /* define POST parameters */
@@ -663,7 +663,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         curl_setopt($this->ch, CURLOPT_USERAGENT, $this->config['useragent']);
         curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($this->ch, CURLOPT_HEADER, false);
-        curl_setopt($this->ch, CURLOPT_URL, ($url));
+        curl_setopt($this->ch, CURLOPT_URL, $this->config['apiurl'] . $strGET);
         curl_setopt($this->ch, CURLOPT_ENCODING, "UTF-8" );
         curl_setopt($this->ch, CURLOPT_COOKIEFILE, $this->config['cookiefile']);
         curl_setopt($this->ch, CURLOPT_COOKIEJAR, $this->config['cookiefile']);
@@ -682,7 +682,8 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         /* parse return data */
         if ($res !== FALSE) {
             $json = json_decode($res, true);
-            $this->l->debug(sprintf("Fetch URL '%s' - success", $url));
+            $this->l->debug(sprintf("Fetch URL '%s' - success",
+                $this->config['apiurl'] . $strGET));
         } else {
             $errstr = sprintf("Error fetching URL '%s': [%d] %s",
                               $url,
