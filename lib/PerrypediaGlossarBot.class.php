@@ -206,8 +206,7 @@ class PerrypediaGlossarBot{
                 break;
             }
         } catch (Exception $exc) {
-            $this->l->error(sprintf("Exception on command handling: %s",
-                                    $exc->getMessage()));
+            $this->l->err(sprintf("Exception: %s", $exc->getMessage()));
             exit(1);
         }
 
@@ -231,8 +230,9 @@ class PerrypediaGlossarBot{
         /* create directory */
         $directory = $this->dirs['01fetch'];
         if (!@System::mkdir('-p '. $directory)) {
-            $this->l->error(sprintf("Can not create directory: %s", $directory));
-            exit(1);
+            $errstr = sprintf("Can not create directory: %s", $directory);
+            $this->l->err($errstr);
+            throw new Exception($errstr);
         }
 
         /* prepare list of perrypedia pages for alphabetical list */
@@ -294,8 +294,9 @@ class PerrypediaGlossarBot{
         /* create directory */
         $directory = $this->dirs['02create'];
         if (!@System::mkdir('-p '. $directory)) {
-            $this->l->error(sprintf("Can not create directory: %s", $directory));
-            exit(1);
+            $errstr = sprintf("Can not create directory: %s", $directory);
+            $this->l->err($errstr);
+            throw new Exception($errstr);
         }
 
         /* save latest pr entry */
@@ -485,8 +486,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         /* create directory */
         $directory = $this->dirs['03diff'];
         if (!@System::mkdir('-p '. $directory)) {
-            $this->l->error(sprintf("Can not create directory: %s", $directory));
-            exit(1);
+            $errstr = sprintf("Can not create directory: %s", $directory);
+            $this->l->err($errstr);
+            throw new Exception($errstr);
         }
 
         /* definitoins from http://code.stephenmorley.org/php/diff-implementation/ */
@@ -652,9 +654,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $json = json_decode($res, true);
             $this->l->debug(sprintf("Fetch URL '%s' - success", $url));
         } else {
-            $this->l->error(sprintf("Error fetching URL '%s': [%d] %s",
-                                    $url, curl_errno($ch), curl_error($ch)));
-            exit(1);
+            $errstr = sprintf("Error fetching URL '%s': [%d] %s",
+                              $url, curl_errno($ch), curl_error($ch));
+            $this->l->err($errstr);
+            throw new Exception($errstr);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));

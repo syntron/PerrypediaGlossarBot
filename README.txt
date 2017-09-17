@@ -7,6 +7,9 @@ Wie funktioniert es?
 - Alphabetische Seiten erstellen
 - Neue Seiten hochladen
 
+- PerrypediaGlossarBot:run() verwendet Exceptions; abgefangen nur in dieser
+  Funktion
+
 Anforderungen:
 - php7
   - php7-curl
