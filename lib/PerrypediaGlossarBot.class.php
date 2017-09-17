@@ -693,6 +693,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             throw new Exception($errstr);
         }
 
+        /* debug output */
+        $this->l->debug(sprintf("request result (json format): %s",
+            print_r($json, TRUE)));
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
         return $json;
