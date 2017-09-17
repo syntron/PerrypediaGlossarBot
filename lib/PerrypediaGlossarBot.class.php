@@ -57,8 +57,20 @@ class PerrypediaGlossarBot{
         /* prepare logging */
         $this->preparelog();
 
-        /* log arguments */
-        $this->l->debug(sprintf("args: %s", print_r($this->args, TRUE)));
+        /* log config */
+        foreach ($this->config as $k => $v) {
+            /* do NOT display the password */
+            if ($k == 'password') {
+                $v = '***';
+            }
+            $this->l->debug(sprintf("[config] %s => %s", $k, $v));
+        }
+        /* log options */
+        foreach ($this->args->options as $k => $v) {
+            $this->l->debug(sprintf("[options] %s => %s", $k, $v));
+        }
+        /* log command */
+        $this->l->debug(sprintf("[command] %s", $this->args->command_name));
 
         /* initialise curl */
         $this->ch = curl_init();
