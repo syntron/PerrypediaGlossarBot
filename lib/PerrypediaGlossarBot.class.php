@@ -694,6 +694,14 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $strGET = '?';
         foreach ($pGET as $k => $v) {
           $strGET = $strGET . sprintf("%s=%s&", urlencode($k), urlencode($v));
+
+          /* no newlines for log message */
+          $v = str_replace(array("\r\n", "\r", "\n"), "", $v);
+          /* check for long values and shorten them */
+          if ($strlen = strlen($v) > 33) {
+            // additional '-1' for the NULL terminated string
+            $v = substr_replace($v, "...", 15, $strlen - 15 - 1);
+          }
           $this->l->debug(sprintf("GET:  '%s' => '%s'", $k, $v));
         }
         /* define POST parameters */
