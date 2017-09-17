@@ -1,6 +1,7 @@
-config.php
+*.diff
+*.diff.html
 *.log
 *.perrypedia.json
 *.perrypedia.txt
-*.diff.html
 *.phpvar
+config.php
