@@ -582,12 +582,61 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
     }
 
+    /*
+     based on:
+     - https://www.mediawiki.org/wiki/API:Edit/Editing_with_Python
+     */
     private function run04submit()
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
         $this->PP_login();
+
+        /* get edit token */
+        $pGET = array();
+        $pPOST = array(
+            "action" => "query",
+            "meta" => "tokens",
+        );
+        $json = $this->PP_request($pPOST, $pGET);
+        $edittoken = $json['query']['tokens']['csrftoken'];
+        $this->l->debug(sprintf("edit token: %s", $edittoken));
+
+        /* upload new pages */
+        foreach ($this->GlossarAlphPages as $p) {
+            $pagename = "Perry Rhodan-Glossar ". $p;
+            $pagename = strtr($pagename, " ", "_");
+
+            $this->l->info(sprintf("Update Perrypedia page '%s' ...", $pagename));
+
+            /* get content of updated page */
+            $filename = $this->dirs['02create'] .'/'. $pagename .'.perrypedia.txt';
+            $content = file_get_contents($filename);
+            $summary = sprintf("SyntronsBot Update %s", date("c", time()));
+
+            /* update page */
+            $pGET = array();
+            $pPOST = array(
+                /* https://www.mediawiki.org/wiki/Special:MyLanguage/API:Edit */
+                "action" => "edit",
+                "text" => $content,
+                "md5" => md5($content),
+                "summary" => $summary,
+                "bot" => 1, /* this is a bot */
+                "nocreate" => 1, /* never create a page */
+                "title" => $pagename,
+                "token" => $edittoken,
+            );
+            $json = $this->PP_request($pPOST, $pGET);
+            if (!$json['edit']['result'] == "Success") {
+                $errstr = sprintf("Error updating page '%s'", $pagename);
+                $this->l->err($errstr);
+                throw new Exception($errstr);
+            }
+            $this->l->info(sprintf("Update Perrypedia page '%s' - success",
+                $pagename));
+        }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
