@@ -598,7 +598,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         );
 
         /* send request */
-        $json = $this->request4PP($this->urls['api'], NULL, $pGET);
+        $json = $this->PP_request(NULL, $pGET);
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
@@ -611,7 +611,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
      - https://serverfault.com/questions/520797/how-to-add-content-to-all-pages-in-a-mediawiki
      - https://www.mediawiki.org/wiki/User:Bcoughlan/Login_with_curl
      */
-    private function request4PP($url, $pPOST = array(), $pGET = array())
+    private function PP_request($pPOST = array(), $pGET = array())
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
