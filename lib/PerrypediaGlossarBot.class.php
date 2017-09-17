@@ -592,13 +592,13 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         /* fetch data using curl */
         $ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		$res = curl_exec($ch);
-		curl_close($ch);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        $res = curl_exec($ch);
+        curl_close($ch);
 
-		/* parse return data */
-		if ($res !== FALSE) {
+        /* parse return data */
+        if ($res !== FALSE) {
             $json = json_decode($res, true);
             $this->l->debug(sprintf("Fetch URL '%s' - success", $url));
         } else {
@@ -607,14 +607,14 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             exit(1);
         }
 
-		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
-		return $json;
+        return $json;
     }
 
     private function savePerrypediaJSON($directory, $pagedata)
     {
-		$filename = $pagedata['title'];
+        $filename = $pagedata['title'];
         $filename = strtr($filename, " ", "_");
 
         $file = $directory .'/'. $filename .'.perrypedia.json';
@@ -624,14 +624,14 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
     private function writeFile($file, $str)
     {
-		$fh = fopen($file, "w+");
+        $fh = fopen($file, "w+");
         fwrite($fh, $str);
         fclose($fh);
     }
 
     private function writePHP2file($file, $data)
     {
-		$fh = fopen($file, "w+");
+        $fh = fopen($file, "w+");
         fwrite($fh, serialize($data));
         fclose($fh);
     }
