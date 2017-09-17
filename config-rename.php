@@ -1,6 +1,10 @@
 <?php
 
-/* rename table; mainly for names */
+/*
+ rename table; mainly for names
+ key:   name as used in Glossar; no Wikipaedia formating
+ value: correct name in Wikipedia format
+ */
 $rename = array(
   "Alaska Saedelaere" => "[[Alaska Saedelaere|Saedelaere, Alaska]]",
   "Cistolo Khan" => "[[Cistolo Khan|Khan, Cistolo]]",
@@ -39,4 +43,5 @@ $rename = array(
   "Trim Marath" => "[[Trim Marath|Marath, Trim]]",
   "Tuck Mergenburgh" => "[[Tuck Mergenburgh|Mergenburgh, Tuck]]",
   "Vincent Garron" => "[[Vincent Garron|Garron, Vincent]]",
+  "Ybarri, Hendrike<!--Schreibfehler-->" => "[[Ybarri, Henrike]]", // ??
 );
