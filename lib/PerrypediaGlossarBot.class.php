@@ -731,8 +731,8 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         /* parse return data */
         if ($res !== FALSE) {
             $json = json_decode($res, true);
-            $this->l->debug(sprintf("Fetch URL '%s' - success",
-                $this->config['apiurl'] . $strGET));
+            $this->l->debug(sprintf("URL '%s' - success",
+                $this->config['apiurl']));
         } else {
             $errstr = sprintf("Error fetching URL '%s': [%d] %s",
                               $url,
