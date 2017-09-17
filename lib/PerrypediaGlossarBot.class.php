@@ -20,6 +20,7 @@ class PerrypediaGlossarBot{
     private $l = NULL;      /* log handle */
     private $args = NULL;   /* command line arguments */
     private $ch = NULL;     /* curl handle */
+    private $login = FALSE; /* login status */
 
     private $GlossarAlphPages= array(
         'A','B','C','D','E','F','G','H','I-J','K','L','M','N','O','P-Q','R',
@@ -585,6 +586,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        $this->PP_login();
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
@@ -691,6 +695,51 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
         return $json;
+    }
+
+    private function PP_login() {
+
+        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* login step 1 - get logintoken */
+        $pGET = array(
+            "action" => "query",
+            "meta" => "tokens",
+            "type" => "login",
+        );
+        $pPOST = array(
+        );
+
+        $json = $this->PP_request($pPOST, $pGET);
+        if (!$json['query']['tokens']['logintoken']) {
+            $errstr = "Could not acquire login token - check apiurl/account/password!";
+            $this->l->err($errstr);
+            throw new Exception($errstr);
+        }
+        $this->l->debug(sprintf("PP login (step 1): %s", print_r($json, TRUE)));
+
+        $pGET = array(
+        );
+        $pPOST = array(
+            "action" => "login",
+            "lgname" => $this->config['account'],
+            "lgpassword" => $this->config['password'],
+            "lgtoken" => $json['query']['tokens']['logintoken'],
+        );
+        $json = $this->PP_request($pPOST, $pGET);
+        $this->l->debug(sprintf("PP login (step 2): %s", print_r($json, TRUE)));
+        if (!$json['login']['result'] == "Success") {
+            $errstr = "Login failed possible - check account/password!";
+            $this->l->err($errstr);
+            throw new Exception($errstr);
+        }
+
+        /* login successfull */
+        $this->login = TRUE;
+        $this->l->notice("Login to Perrypedia successful!");
+
+        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
     }
 
     private function savePerrypediaJSON($directory, $pagedata)
