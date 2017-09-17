@@ -19,10 +19,7 @@ class PerrypediaGlossarBot{
     private $rename = NULL; /* rename table */
     private $l = NULL;      /* log handle */
     private $args = NULL;   /* command line arguments */
-
-    private $urls = array(  /* URLs used to connect to perrypedia */
-        'api' => "https://www.perrypedia.proc.org/mediawiki/api.php",
-    );
+    private $ch = NULL;     /* curl handle */
 
     private $GlossarAlphPages= array(
         'A','B','C','D','E','F','G','H','I-J','K','L','M','N','O','P-Q','R',
@@ -63,13 +60,16 @@ class PerrypediaGlossarBot{
         /* log arguments */
         $this->l->debug(sprintf("args: %s", print_r($this->args, TRUE)));
 
+        /* initialise curl */
+        $this->ch = curl_init();
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
 
     /* destructor */
     function __destruct() {
-        /* nothing */
+        curl_close($this->ch);
     }
 
     /* analyse command line
@@ -644,26 +644,24 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         }
 
         /* fetch data using curl */
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_USERAGENT, $this->config['useragent']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_URL, ($url));
-        curl_setopt($ch, CURLOPT_ENCODING, "UTF-8" );
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookiefile']);
-        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookiefile']);
+        curl_setopt($this->ch, CURLOPT_USERAGENT, $this->config['useragent']);
+        curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($this->ch, CURLOPT_HEADER, false);
+        curl_setopt($this->ch, CURLOPT_URL, ($url));
+        curl_setopt($this->ch, CURLOPT_ENCODING, "UTF-8" );
+        curl_setopt($this->ch, CURLOPT_COOKIEFILE, $this->config['cookiefile']);
+        curl_setopt($this->ch, CURLOPT_COOKIEJAR, $this->config['cookiefile']);
         //curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $strPOST);
+        curl_setopt($this->ch, CURLOPT_POSTFIELDS, $strPOST);
         /* if activated, debug information are appended to 'curl.debug' */
         if (FALSE) {
-          curl_setopt($ch, CURLOPT_VERBOSE, true); // verbose output
+          curl_setopt($this->ch, CURLOPT_VERBOSE, true); // verbose output
           $fp = fopen("curl.debug", "a+");
-          curl_setopt($ch, CURLOPT_STDERR, $fp); // write it to file
+          curl_setopt($this->ch, CURLOPT_STDERR, $fp); // write it to file
           $fclose($fh);
         }
         /* execute request */
-        $res = curl_exec($ch);
-        curl_close($ch);
+        $res = curl_exec($this->ch);
 
         /* parse return data */
         if ($res !== FALSE) {
@@ -671,7 +669,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $this->l->debug(sprintf("Fetch URL '%s' - success", $url));
         } else {
             $errstr = sprintf("Error fetching URL '%s': [%d] %s",
-                              $url, curl_errno($ch), curl_error($ch));
+                              $url,
+                              curl_errno($this->ch),
+                              curl_error($this->ch));
             $this->l->err($errstr);
             throw new Exception($errstr);
         }
