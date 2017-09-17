@@ -626,7 +626,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         /* define URL (api URL + GET parameters) */
         $this->l->debug(sprintf("URL:  '%s'", $url));
-        $url = $url .'?';
+        $url = $this->config['apiurl'] .'?';
         foreach ($pGET as $k => $v) {
           $url = $url . sprintf("%s=%s&", urlencode($k), urlencode($v));
           $this->l->debug(sprintf("GET:  '%s' => '%s'", $k, $v));

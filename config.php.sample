@@ -4,7 +4,8 @@
 $config = array();
 
 /* Perrypedia account and password */
-$config['account'] = "my Bot";
-$config['password'] = "my BotPassword";
+$config['account'] = "my Bot"; /* CHANGEME */
+$config['password'] = "my BotPassword"; /* CHANGEME */
+$config['apiurl'] = "https://www.perrypedia.proc.org/mediawiki/api.php";
 $config['useragent'] = "PerrypediaGlossarBot";
 $config['cookiefile'] = './Perrypedia.cookie';
