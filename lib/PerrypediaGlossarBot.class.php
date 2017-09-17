@@ -208,6 +208,7 @@ class PerrypediaGlossarBot{
         } catch (Exception $exc) {
             $this->l->error(sprintf("Exception on command handling: %s",
                                     $exc->getMessage()));
+            exit(1);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
@@ -603,7 +604,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         } else {
             $this->l->error(sprintf("Error fetching URL '%s': [%d] %s",
                                     $url, curl_errno($ch), curl_error($ch)));
-            $json = FALSE;
+            exit(1);
         }
 
 		$this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
