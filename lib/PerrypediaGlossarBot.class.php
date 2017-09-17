@@ -719,7 +719,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $column = ceil($count / 3);
 
         /* build perrypedia page for each entry */
-        $str = sprintf("== %s ==\n", $key);
+        $str = sprintf("== %s ==\n\n", $key);
         $str .= "{| valign=\"top\" border=\"0\" cellpadding=\"4\" cellspacing=\"2\" width=\"100%\"\n";
         $str .= "| width=\"33%\" valign=\"top\" |\n";
         for ($ii = 0; $ii < min($column, $count); $ii++) {
