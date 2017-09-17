@@ -404,6 +404,12 @@ class PerrypediaGlossarBot{
             } else {
                 $glossar[$char][$key]['count']++;
                 $glossar[$char][$key]['pr'][] = $e['pr'];
+                /* update entry if str is longer */
+                if (strlen($glossar[$char][$key]['orig']) < strlen($e['orig'])) {
+                    $this->l->debug(sprintf("update entry: '%s' => '%s'",
+                        $glossar[$char][$key]['orig'], $e['orig']));
+                    $glossar[$char][$key]['orig'] = $e['orig'];
+                }
             }
         }
 
