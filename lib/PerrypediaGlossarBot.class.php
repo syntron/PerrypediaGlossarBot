@@ -199,7 +199,7 @@ class PerrypediaGlossarBot{
                 $this->run03diff();
                 break;
             case 'submit':
-//                 $this->run04submit();
+                $this->run04submit();
                 break;
             default:
                 $this->l->warning("No command defined (try help using '--help')");
