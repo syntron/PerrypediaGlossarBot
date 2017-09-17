@@ -21,7 +21,7 @@ class PerrypediaGlossarBot{
     private $args = NULL;   /* command line arguments */
 
     private $urls = array(  /* URLs used to connect to perrypedia */
-        'api:query' => "https://www.perrypedia.proc.org/mediawiki/api.php?action=query&titles=%s&prop=revisions&rvprop=content&format=json",
+        'api' => "https://www.perrypedia.proc.org/mediawiki/api.php",
     );
 
     private $GlossarAlphPages= array(
@@ -575,20 +575,70 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
     }
 
-    /*
-     see: https://www.mediawiki.org/wiki/API
-     */
     private function fetchPPjson($titles)
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
+        /* log some information */
+        $this->l->info(sprintf("Fetching PP pages: '%s'", $titles));
+
         /* no spaces in titles - replace them by underscore */
         $titles = strtr($titles, " ", "_");
 
-        /* define URL */
-        $url = sprintf($this->urls['api:query'], $titles);
-        $this->l->info(sprintf("Fetch URL '%s'", $url));
+        /* define get parameters for PP api */
+        $pGET = array(
+            'action' => 'query',
+            'titles' => $titles,
+            'prop' => 'revisions',
+            'rvprop' => 'content',
+            'format' => 'json',
+        );
+
+        /* send request */
+        $json = $this->request4PP($this->urls['api'], NULL, $pGET);
+
+        $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
+
+        return $json;
+    }
+
+    /*
+     sources:
+     - https://www.mediawiki.org/wiki/API
+     - https://www.mediawiki.org/wiki/User:Bcoughlan/Login_with_curl
+     */
+    private function request4PP($url, $pPOST = array(), $pGET = array())
+    {
+
+        $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* check arguments */
+        $pPOST = (array)$pPOST;
+        $pGET = (array)$pGET;
+
+        /* force json */
+        $pPOST['format'] = 'json';
+        $pGET['format'] = 'json';
+
+        /* define URL (api URL + GET parameters) */
+        $this->l->debug(sprintf("URL:  '%s'", $url));
+        $url = $url .'?';
+        foreach ($pGET as $k => $v) {
+          $url = $url . sprintf("%s=%s&", urlencode($k), urlencode($v));
+          $this->l->debug(sprintf("GET:  '%s' => '%s'", $k, $v));
+        }
+        /* define POST parameters */
+        $strPOST = "";
+        foreach ($pPOST as $k => $v) {
+          $strPOST = $strPOST . sprintf("%s=%s&", urlencode($k), urlencode($v));
+          /* check for long values */
+          if ($strlen = strlen($v) > 33) {
+            // additional '-1' for the NULL terminated string
+            $v = substr_replace($v, "...", 15, $strlen - 15 - 1);
+          }
+          $this->l->debug(sprintf("POST: '%s' => '%s'", $k, $v));
+        }
 
         /* fetch data using curl */
         $ch = curl_init($url);
