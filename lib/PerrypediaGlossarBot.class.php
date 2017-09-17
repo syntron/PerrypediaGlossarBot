@@ -712,8 +712,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             "meta" => "tokens",
             "type" => "login",
         );
-        $pPOST = array(
-        );
+        $pPOST = array();
 
         $json = $this->PP_request($pPOST, $pGET);
         if (!$json['query']['tokens']['logintoken']) {
@@ -721,10 +720,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $this->l->err($errstr);
             throw new Exception($errstr);
         }
-        $this->l->debug(sprintf("PP login (step 1): %s", print_r($json, TRUE)));
+        $this->l->info("PP login (step 1): OK");
 
-        $pGET = array(
-        );
+        $pGET = array();
         $pPOST = array(
             "action" => "login",
             "lgname" => $this->config['account'],
@@ -732,7 +730,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             "lgtoken" => $json['query']['tokens']['logintoken'],
         );
         $json = $this->PP_request($pPOST, $pGET);
-        $this->l->debug(sprintf("PP login (step 2): %s", print_r($json, TRUE)));
+        $this->l->info("PP login (step 2): OK");
         if (!$json['login']['result'] == "Success") {
             $errstr = "Login failed possible - check account/password!";
             $this->l->err($errstr);
