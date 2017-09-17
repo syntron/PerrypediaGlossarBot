@@ -953,6 +953,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $pattern = "!\[\[([^\]]+\||)(.*?)\]\]!";
 
         $str = preg_replace($pattern, "$2", $str);
+        $str = htmlspecialchars_decode($str);
         $str = trim($str);
 
         return $str;
