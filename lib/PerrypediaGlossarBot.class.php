@@ -543,14 +543,23 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $pagename = "Perry Rhodan-Glossar ". $p;
             $pagename = strtr($pagename, " ", "_");
 
+            $this->l->info(sprintf("Creating diff for '%s' ...", $pagename));
+
             $filename_old = $this->dirs['01fetch'] .'/'. $pagename .'.perrypedia.txt';
             $filename_new = $this->dirs['02create'] .'/'. $pagename .'.perrypedia.txt';
 
-            $diff = Diff::toTable(Diff::compareFiles($filename_old, $filename_new));
-            $content = sprintf($diff_pre, $pagename) . $diff . $diff_post;
+            $diff = Diff::compareFiles($filename_old, $filename_new);
 
+            /* diff as html table */
+            $difftable = Diff::toTable($diff);
+            $content = sprintf($diff_pre, $pagename) . $difftable . $diff_post;
             $diffname = $directory .'/'. $pagename .'.diff.html';
             $this->writeFile($diffname, $content);
+
+            /* diff as standard diff (diff -u) */
+            $diffstr = Diff::toString($diff);
+            $diffname = $directory .'/'. $pagename .'.diff';
+            $this->writeFile($diffname, $diffstr);
         }
 
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
