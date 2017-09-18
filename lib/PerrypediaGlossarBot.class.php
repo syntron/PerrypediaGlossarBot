@@ -287,7 +287,7 @@ class PerrypediaGlossarBot{
         $titles = strtr($titles, " ", "_");
 
         /* fetch current versions of the alphabetical list */
-        $json = $this->fetchPPjson($titles);
+        $json = $this->PP_fetchJSON($titles);
         foreach ($json['query']['pages'] as $p) {
             /* save json data */
             $this->savePerrypediaJSON($directory, $p);
@@ -301,7 +301,7 @@ class PerrypediaGlossarBot{
         }
 
         /* fetch PR-Glossar page*/
-        $json = $this->fetchPPjson('Vorlage:PR-Glossar');
+        $json = $this->PP_fetchJSON('Vorlage:PR-Glossar');
         $pageID = array_keys($json['query']['pages']);
         $p = $json['query']['pages'][$pageID[0]];
         $this->savePerrypediaJSON($directory, $p);
@@ -317,7 +317,7 @@ class PerrypediaGlossarBot{
             }
         }
 
-        $json = $this->fetchPPjson($titles);
+        $json = $this->PP_fetchJSON($titles);
         foreach ($json['query']['pages'] as $p) {
             $this->savePerrypediaJSON($directory, $p);
         }
@@ -681,7 +681,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
      * Perrypedia related functions                                           *
      * ====================================================================== */
 
-    private function fetchPPjson($titles)
+    private function PP_fetchJSON($titles)
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
