@@ -17,7 +17,7 @@ Ablauf:
     Funktion: run04submit
 
 Author: Matthias Pfafferodt
-Lizenz: CC BY-SA (https://creativecommons.org/licenses/by-sa/4.0/legalcode)
+Lizenz: GPL Version 3.0 or later (http://www.gnu.de/documents/gpl-3.0.de.html)
 
  */
 
