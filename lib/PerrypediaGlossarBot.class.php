@@ -736,6 +736,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
             /* no newlines for log message */
             $v = str_replace(array("\r\n", "\r", "\n"), "", $v);
+            /* do NOT display the password */
+            if (strpos($k, "password") !== FALSE) {
+                $v = '***';
+            }
             /* check for long values and shorten them */
             if ($strlen = strlen($v) > 33) {
                 // additional '-1' for the NULL terminated string
@@ -750,6 +754,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
             /* no newlines for log message */
             $v = str_replace(array("\r\n", "\r", "\n"), "", $v);
+            /* do NOT display the password */
+            if (strpos($k, "password") !== FALSE) {
+                $v = '***';
+            }
             /* check for long values and shorten them */
             if ($strlen = strlen($v) > 33) {
                 // additional '-1' for the NULL terminated string
