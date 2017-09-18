@@ -20,7 +20,7 @@ Wie funktioniert es?
 
 Wo finde ich den Code?
 - Der PHP-Code für den Bot ist auf github zu finden
-  https://github.com/...
+  https://github.com/syntron/PerrypediaGlossarBot/
 
 Wie funktioniert es?
 - Ausgabe von ~/PerrypediaGlossarBot.php -h
