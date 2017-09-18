@@ -64,6 +64,9 @@ class PerrypediaGlossarBot{
             require_once(PGB_BASEDIR .'/dependencies/PEAR/System.php');
         }
 
+        /* initialise curl */
+        $this->ch = curl_init();
+
         /* save config */
         $this->config = $config;
 
@@ -91,16 +94,15 @@ class PerrypediaGlossarBot{
         /* log command */
         $this->l->debug(sprintf("[command] %s", $this->args->command_name));
 
-        /* initialise curl */
-        $this->ch = curl_init();
-
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
 
     /* destructor */
     function __destruct() {
-        curl_close($this->ch);
+        if ($this->ch !== NULL) {
+            curl_close($this->ch);
+        }
     }
 
     /* ====================================================================== *
