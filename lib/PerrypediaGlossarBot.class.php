@@ -5,6 +5,17 @@
 PHP Klasse, welche ein Update für die Perrypedia Seiten mit dem alphabetischen
 sortiertem Glossar erstellt.
 
+Ablauf:
+(1) Einlesen der chronologischen Glossareinträge [[Perry Rhodan-Glossar *]]
+    Funktion: run01fetch()
+(2) Bearbeiten der Daten (extrahieren, sortieren, überprüfen, neue Seiten
+    erstellen
+    Funktion: run02create
+(3) [optional] darstellen der Unterschiede
+    Funktion: run03diff
+(4) Hochladen der neuen Seiten in die Perrypedia
+    Funktion: run04submit
+
 Author: Matthias Pfafferodt
 Lizenz: CC BY-SA (https://creativecommons.org/licenses/by-sa/4.0/legalcode)
 
@@ -14,6 +25,10 @@ Lizenz: CC BY-SA (https://creativecommons.org/licenses/by-sa/4.0/legalcode)
 define("PGB_BASEDIR", dirname(__FILE__));
 
 class PerrypediaGlossarBot{
+
+    /* ====================================================================== *
+     * class variables                                                        *
+     * ====================================================================== */
 
     private $config = NULL; /* configuration; loaded from config.php */
     private $rename = NULL; /* rename table */
@@ -25,18 +40,21 @@ class PerrypediaGlossarBot{
     private $GlossarAlphPages= array(
         'A','B','C','D','E','F','G','H','I-J','K','L','M','N','O','P-Q','R',
         'S','T','U-W','X-Z'
-    );
+    ); /* alph Glossar subpages */
 
     private $dirs = array(
+        "00prepare" => "./steps/00prepare",
         "01fetch"   => "./steps/01fetch",
         "02create"  => "./steps/02create",
         "03diff"    => "./steps/03diff",
         "04submit"  => "./steps/04submit",
-    );
+    ); /* step directories; created if needed */
 
-    /* constructor
-       $config      - configuration (perrypedia account/password)
-     */
+    /* ====================================================================== *
+     * constructor / destructor                                               *
+     * ====================================================================== */
+
+    /* constructor */
     function __construct($config, $rename = array()) {
 
         // first try system PEAR
@@ -85,9 +103,11 @@ class PerrypediaGlossarBot{
         curl_close($this->ch);
     }
 
-    /* analyse command line
-       return value: Console_CommandLine_Result Object
-     */
+    /* ====================================================================== *
+     * command line arguments / logging                                       *
+     * ====================================================================== */
+
+    /* analyse command line; based on PEAR:Console_CommandLine */
     private function commandline()
     {
         // first try system PEAR
@@ -146,7 +166,7 @@ class PerrypediaGlossarBot{
         }
     }
 
-    /* prepare log */
+    /* prepare log - based on PEAR:Log */
     private function preparelog()
     {
         // first try system PEAR
@@ -181,6 +201,10 @@ class PerrypediaGlossarBot{
             }
         }
     }
+
+    /* ====================================================================== *
+     * main functions                                                         *
+     * ====================================================================== */
 
     /* main function */
     public function run()
@@ -231,6 +255,9 @@ class PerrypediaGlossarBot{
     {
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
+
+        /* nothing */
+
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
@@ -433,7 +460,7 @@ class PerrypediaGlossarBot{
             $perrypedia[$key] = $this->createPerrypediaGlossarAlph($key, $entries);
         }
 
-        /* build pages */
+        /* Perrypedia glossar pre/post strings */
         $str_pre = sprintf("{{Navigationsleiste Glossar alphabetisch}}
 
 Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
@@ -444,6 +471,8 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
 {{PPDefaultsort}}
 ";
+
+        /* build pages */
         $pages = array();
         foreach ($this->GlossarAlphPages as $p) {
             switch ($p) {
@@ -501,7 +530,6 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         require_once(PGB_BASEDIR .'/dependencies/diff/class.Diff.php');
 
-
         /* create directory */
         $directory = $this->dirs['03diff'];
         if (!@System::mkdir('-p '. $directory)) {
@@ -510,7 +538,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             throw new Exception($errstr);
         }
 
-        /* definitoins from http://code.stephenmorley.org/php/diff-implementation/ */
+        /* definitions from http://code.stephenmorley.org/php/diff-implementation/ */
         $diff_pre = "<!DOCTYPE html>
 <html>
   <head>
@@ -597,6 +625,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
+        /* login to Perrypedia */
         $this->PP_login();
 
         /* get edit token */
@@ -647,6 +676,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
+
+    /* ====================================================================== *
+     * Perrypedia related functions                                           *
+     * ====================================================================== */
 
     private function fetchPPjson($titles)
     {
@@ -788,6 +821,7 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         }
         $this->l->info("PP login (step 1): OK");
 
+        /* login step 2 - login as Bot */
         $pGET = array();
         $pPOST = array(
             "action" => "login",
@@ -810,6 +844,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $this->l->debug(sprintf("[%s:%s] end", __CLASS__, __FUNCTION__));
 
     }
+
+    /* ====================================================================== *
+     * filesystem interactions                                                *
+     * ====================================================================== */
 
     private function savePerrypediaJSON($directory, $pagedata)
     {
@@ -840,6 +878,10 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         $content = file_get_contents($file);
         return unserialize($content);
     }
+
+    /* ====================================================================== *
+     * additional helper functions                                            *
+     * ====================================================================== */
 
     /*
      https://stackoverflow.com/questions/6837148/change-foreign-characters-to-normal-equivalent
