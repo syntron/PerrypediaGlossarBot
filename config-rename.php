@@ -6,6 +6,7 @@
  value: correct name in Wikipedia format
  */
 $rename = array(
+  // names and related entries
   "Alaska Saedelaere" => "[[Alaska Saedelaere|Saedelaere, Alaska]]",
   "Alaska Saedelaere; das zweite Fragment" => "[[Alaska Saedelaere|Saedelaere, Alaska]]; das zweite Fragment",
   "Alaska Saedelaere; der Mann mit der Maske" => "[[Alaska Saedelaere|Saedelaere, Alaska]]; der Mann mit der Maske",
@@ -24,6 +25,8 @@ $rename = array(
   "Julian Tifflor" => "[[Julian Tifflor|Tifflor, Julian]]",
   "Kaif Chiriatha" => "[[Kaif Chiriatha|Chiriatha, Kaif]]",
   "Lord Zwiebus" => "[[Lord Zwiebus|Zwiebus, Lord]]",
+  "Lotho Keraete" => "[[Lotho Keraete|Keraete, Lotho]]",
+  "Lotho Keraete; Geschichte" => "[[Lotho Keraete|Keraete, Lotho]]; Geschichte",
   "Michael Rhodan" => "[[Michael Rhodan|Rhodan, Michael]]",
   "Mondra Diamond" => "[[Mondra Diamond|Diamond, Mondra]]",
   "Myles Kantor" => "[[Myles Kantor|Kantor, Myles]]",
@@ -34,20 +37,28 @@ $rename = array(
   "Perry Rhodan; Kinder" => "[[Perry Rhodan|Rhodan, Perry]]; Kinder",
   "Poulton Kreyn" => "[[Poulton Kreyn|Kreyn, Poulton]]",
   "Reginald Bull" => "[[Reginald Bull|Bull, Reginald]]",
+  "Reginald Bull; Tod auf Celkar" => "[[Reginald Bull|Bull, Reginald]]; Tod auf [[Celkar]]",
   "Ribald Corello" => "[[Ribald Corello|Corello, Ribald]]",
   "Roi Danton" => "[[Roi Danton|Danton, Roi]]",
   "Roman Muel-Chen" => "[[Roman Muel-Chen|Muel-Chen, Roman]]",
   "Ronald Tekener" => "[[Ronald Tekener|Tekener, Ronald]]",
+  "Sichu Dorksteiger" => "[[Sichu Dorksteiger|Dorksteiger, Sichu]]",
   "Skill Morgenstern" => "[[Skill Morgenstern|Morgenstern, Skill]]",
   "Solder Brant" => "[[Solder Brant|Brant, Solder]]",
   "Startac Schroeder" => "[[Startac Schroeder|Schroeder, Startac]]",
   "Stendal Navajo" => "[[Stendal Navajo|Navajo, Stendal]]",
+  "Suzan Betty Rhodan-Waringer" => "[[Suzan Betty Rhodan-Waringer|Rhodan-Waringer, Suzan Betty]]",
   "Tautmo Aagenfelt" => "[[Tautmo Aagenfelt|Aagenfelt, Tautmo]]",
   "Tess Qumisha" => "[[Tess Qumisha|Qumisha, Tess]]",
   "Tim Makenstein" => "[[Tim Makenstein|Makenstein, Tim]]",
+  "Toio Zindher" => "[[Toio Zindher|Zindher, Toio]]",
   "Trabzon Karett" => "[[Trabzon Karett|Karett, Trabzon]]",
   "Trim Marath" => "[[Trim Marath|Marath, Trim]]",
   "Tuck Mergenburgh" => "[[Tuck Mergenburgh|Mergenburgh, Tuck]]",
   "Vincent Garron" => "[[Vincent Garron|Garron, Vincent]]",
+  // spelling errors; small differences in the names
+  "Hasprotagar (=Reich der Hasproner)" => "[[Hasprotagar]] (Reich der Hasproner)",
+  "Jyresca; Plural: Jyrescao" => "[[Jyresca]] (Plural: Jyrescao)",
+  "USO (United Stars Organization)" => "[[USO]] (United Stars Organisation)",
   "Ybarri, Hendrike<!--Schreibfehler-->" => "[[Ybarri, Henrike]]", // ??
 );
