@@ -120,8 +120,8 @@ class PerrypediaGlossarBot{
         }
 
         $parser = new Console_CommandLine();
-        $parser->description = 'Perrypedia Bot welcher die alphabetischen Glossar Seiten aktualisiert.';
-        $parser->version = '0.2';
+        $parser->description = 'PerrypediaGlossarBot - Alphabetischen Glossar aktualisieren.';
+        $parser->version = '0.2.0';
         $parser->addOption('debug', array(
             'short_name'  => '-d',
             'long_name'   => '--debug',
