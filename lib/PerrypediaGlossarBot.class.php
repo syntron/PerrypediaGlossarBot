@@ -1010,9 +1010,15 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
     private function perrypediaVisible($str)
     {
-        $pattern = "!\[\[([^\]]+\||)(.*?)\]\]!";
+      /* find entries like:
 
-        $str = preg_replace($pattern, "$2", $str);
+       * [[9-Imbariem]] ([[Quelle:PR2092|PR&nbsp;2092]])
+       * {{WP|al-Biruni|al-Biruni, Abu}} ([[Quelle:PR2909|PR&nbsp;2909]])
+
+       */
+        $pattern = "!({{WP\||\[\[)([^\]]+\||)(.*?)(}}|\]\])!";
+
+        $str = preg_replace($pattern, "$3", $str);
         $str = htmlspecialchars_decode($str);
         $str = trim($str);
 
