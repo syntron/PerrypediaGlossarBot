@@ -57,8 +57,8 @@ $rename = array(
   "Tuck Mergenburgh" => "[[Tuck Mergenburgh|Mergenburgh, Tuck]]",
   "Vincent Garron" => "[[Vincent Garron|Garron, Vincent]]",
   // spelling errors; small differences in the names
-  "Hasprotagar (=Reich der Hasproner)" => "[[Hasprotagar]] (Reich der Hasproner)",
-  "Jyresca; Plural: Jyrescao" => "[[Jyresca]] (Plural: Jyrescao)",
-  "USO (United Stars Organization)" => "[[USO]] (United Stars Organisation)",
+  // [fixed by Norman] "Hasprotagar (=Reich der Hasproner)" => "[[Hasprotagar]] (Reich der Hasproner)",
+  // [fixed by Norman] "Jyresca; Plural: Jyrescao" => "[[Jyresca]] (Plural: Jyrescao)",
+  // [fixed by Norman] "USO (United Stars Organization)" => "[[USO]] (United Stars Organisation)",
   "Ybarri, Hendrike<!--Schreibfehler-->" => "[[Ybarri, Henrike]]", // ??
 );
