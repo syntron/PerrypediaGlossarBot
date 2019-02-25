@@ -23,6 +23,8 @@ Lizenz: GPL Version 3.0 or later (http://www.gnu.de/documents/gpl-3.0.de.html)
 
 /* define basedir for include files */
 define("PGB_BASEDIR", dirname(__FILE__));
+/* force include path */
+set_include_path(PGB_BASEDIR . "/dependencies/PEAR/");
 
 class PerrypediaGlossarBot{
 
