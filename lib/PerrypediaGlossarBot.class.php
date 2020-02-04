@@ -783,9 +783,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
         /* if activated, debug information are appended to 'curl.debug' */
         if (FALSE) {
           curl_setopt($this->ch, CURLOPT_VERBOSE, true); // verbose output
-          $fp = fopen("curl.debug", "a+");
-          curl_setopt($this->ch, CURLOPT_STDERR, $fp); // write it to file
-          $fclose($fh);
+          $fh = fopen("curl.debug", "a+");
+          curl_setopt($this->ch, CURLOPT_STDERR, $fh); // write it to file
+          fclose($fh);
         }
         /* execute request */
         $res = curl_exec($this->ch);
