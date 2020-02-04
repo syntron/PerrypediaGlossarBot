@@ -67,3 +67,4 @@ GPL Version 3.0 or later (http://www.gnu.de/documents/gpl-3.0.de.html)
 
 Änderungslog:
 2017/09/17 - 0.2.0 - erster Durchlauf auf der Perrypedia
+2020/02/04 - ..... - update Perrypedia URL (www.perrypedia.de)
