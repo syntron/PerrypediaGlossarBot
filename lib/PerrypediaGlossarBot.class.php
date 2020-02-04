@@ -668,7 +668,8 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
                 "token" => $edittoken,
             );
             $json = $this->PP_request($pPOST, $pGET);
-            if (!$json['edit']['result'] == "Success") {
+            if (!isset($json['edit']['result'])
+                || $json['edit']['result'] != "Success") {
                 $errstr = sprintf("Error updating page '%s'", $pagename);
                 $this->l->err($errstr);
                 throw new Exception($errstr);
