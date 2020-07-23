@@ -993,6 +993,8 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         /* build perrypedia page for each entry */
         $str = sprintf("== %s ==\n\n", $key);
+/* 1: use table */
+/*
         $str .= "{| valign=\"top\" border=\"0\" cellpadding=\"4\" cellspacing=\"2\" width=\"100%\"\n";
         $str .= "| width=\"33%\" valign=\"top\" |\n";
         for ($ii = 0; $ii < min($column, $count); $ii++) {
@@ -1007,6 +1009,15 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
         }
         $str .= "|}\n";
+*/
+
+/* 2: use diff */
+        $str .= "<div style=\"column-width:30em\">\n";
+        for ($ii = 0; $ii < $count; $ii++) {
+            $str .= $this->createPerrypediaGlossarAlphEntry($entries[$keys[$ii]]);
+        }
+        $str .= "</div>\n";
+
         $str .= sprintf("''Anzahl der Einträge: '''%d''' ''\n", $count);
 
         return $str;
