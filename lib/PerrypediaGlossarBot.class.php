@@ -137,6 +137,13 @@ class PerrypediaGlossarBot{
             'help_name'   => 'FILE',
             'action'      => 'StoreString'
         ));
+        $parser->addOption('summary', array(
+            'short_name'  => '-s',
+            'long_name'   => '--summary',
+            'description' => 'Perrypedia summary',
+            'help_name'   => 'SUMMARY',
+            'action'      => 'StoreString'
+        ));
         $step_all_cmd = $parser->addCommand('all', array(
             'description' => 'Alle Schritte nacheinander ausführen [0-4]'
         ));
@@ -629,6 +636,14 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
 
         $this->l->debug(sprintf("[%s:%s] start", __CLASS__, __FUNCTION__));
 
+        /* check for an extra summary entry */
+        $summary_extra = NULL;
+        if (strlen($this->args->options['summary']) > 0) {
+            $summary_extra = $this->args->options['summary'];
+        }
+        $this->l->debug(sprintf("[%s:%s] extra summary: '%s'",
+            __CLASS__, __FUNCTION__, $summary_extra));
+
         /* login to Perrypedia */
         $this->PP_login();
 
@@ -653,6 +668,9 @@ Stand: [[Quelle:PR%1\$d|PR&nbsp;%1\$d]]
             $filename = $this->dirs['02create'] .'/'. $pagename .'.perrypedia.txt';
             $content = file_get_contents($filename);
             $summary = sprintf("SyntronsBot Update %s", date("c", time()));
+            if ($summary_extra !== NULL) {
+                $summary .= " - ". $summary_extra;
+            }
 
             /* update page */
             $pGET = array();
